@@ -20,6 +20,7 @@ const userKeys = new Map();
 let connectedUsers = new Map();
 const unreadMessages = new Map();
 let activeConversationWith = null;
+let isViewingUsersList = window.innerWidth <= 768;  // Initialize based on screen width
 
 // Connection established
 socket.on('connect', () => {
@@ -48,10 +49,13 @@ socket.on('private-message', async ({ from, fromName, encryptedMessage }) => {
             text: decryptedMessage
         });
 
-        // If this message is not from the active conversation, increment unread count
-        if (from !== activeConversationWith) {
+        // Increment unread messages counter only if:
+        // 1. User is viewing the users list, OR
+        // 2. Message is from someone other than active conversation
+        if (isViewingUsersList || from !== activeConversationWith) {
             const currentCount = unreadMessages.get(from) || 0;
             unreadMessages.set(from, currentCount + 1);
+            // Force UI update
             updateUsersList(Array.from(connectedUsers.values()));
         }
     } catch (error) {
@@ -87,11 +91,15 @@ function updateUsersList(users) {
             // Create user name container
             const nameContainer = document.createElement('div');
             nameContainer.className = 'user-item-content';
-            nameContainer.textContent = `User: ${user.displayName}`;
             
-            // Add unread messages badge if any
+            // Add username
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = user.displayName;
+            nameContainer.appendChild(nameSpan);
+            
+            // Add unread messages badge
             const unreadCount = unreadMessages.get(user.socketId) || 0;
-            if (unreadCount > 0 && user.socketId !== activeConversationWith) {
+            if (unreadCount > 0) {
                 const badge = document.createElement('span');
                 badge.className = 'unread-badge';
                 badge.textContent = unreadCount;
@@ -107,6 +115,7 @@ function updateUsersList(users) {
                 
                 // Update active conversation
                 activeConversationWith = user.socketId;
+                isViewingUsersList = false;  // Explicitly set to false when starting a chat
                 
                 // Update UI
                 document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
@@ -119,16 +128,10 @@ function updateUsersList(users) {
                 // Update message display
                 filterMessages(user.socketId);
                 
-                // Remove badge immediately
-                const badge = userElement.querySelector('.unread-badge');
-                if (badge) {
-                    badge.remove();
-                }
-                
                 // Focus message input
                 document.getElementById('message-input').focus();
 
-                // Add this for mobile
+                // Handle mobile view
                 if (window.innerWidth <= 768) {
                     backToChat();
                 }
@@ -353,11 +356,18 @@ window.onclick = function(event) {
 function toggleUsersList() {
     const usersPanel = document.querySelector('.users-panel');
     usersPanel.classList.add('active');
+    isViewingUsersList = true;
+    activeConversationWith = null;
+    // Force UI update
+    updateUsersList(Array.from(connectedUsers.values()));
 }
 
 function backToChat() {
     const usersPanel = document.querySelector('.users-panel');
     usersPanel.classList.remove('active');
+    isViewingUsersList = false;
+    // Force UI update
+    updateUsersList(Array.from(connectedUsers.values()));
 }
 
 // Optional: Handle resize events
@@ -365,5 +375,11 @@ window.addEventListener('resize', () => {
     const usersPanel = document.querySelector('.users-panel');
     if (window.innerWidth > 768) {
         usersPanel.classList.remove('active');
+        isViewingUsersList = false;
+    } else {
+        // On mobile, if no active conversation, show users list
+        isViewingUsersList = !activeConversationWith;
     }
+    // Force UI update
+    updateUsersList(Array.from(connectedUsers.values()));
 });
