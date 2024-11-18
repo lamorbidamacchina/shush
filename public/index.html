@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shush! | Private web chats for everyone</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-titles">
+                <h1 class="title">Shush!</h1>
+                <h2 class="subtitle">An open source elliptic curve end to end encrypted web chat</h2>
+            </div>
+            <button onclick="openAboutModal()" class="about-button">About</button>
+        </header>
+        
+        <div class="chat-layout">
+            <div class="users-panel">
+                <h2 class="panel-title">Online Users</h2>
+                <div id="users-list" class="users-list"></div>
+            </div>
+            
+            <div class="chat-panel">
+                <div class="mobile-nav">
+                    <button class="mobile-nav-button users-button" onclick="toggleUsersList()">
+                        Users List
+                    </button>
+                    <button class="mobile-nav-button back-button" onclick="backToChat()">
+                        Back to Chat
+                    </button>
+                </div>
+                
+                <div id="message-list" class="message-list"></div>
+                <div class="message-input">
+                    <input type="hidden" id="recipient-select">
+                    <input type="text" id="message-input" class="input" placeholder="Type your message">
+                    <button onclick="sendMessage()" class="button">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="about-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>About Shush!</h2>
+                    <button onclick="closeAboutModal()" class="close-button">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Shush is an open source elliptic curve end to end encrypted web chat.<br>At the moment it is just a proof of concept for developers and researchers interested in playing with elliptic curve cryptography.<br>Even at this stage, it is already a decent alternative to popular instant messaging apps that claim to be end to end encrypted but do not publish their source code entirely ;)</p>
+                    <p><a href="https://github.com/lamorbidamacchina/shush" target="_blank">Repository on GitHub!</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+</html>

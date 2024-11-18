@@ -1,0 +1,500 @@
+:root {
+    --background: #ffffff;
+    --foreground: #020817;
+    --card: #ffffff;
+    --card-foreground: #020817;
+    --primary: #0f172a;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #f1f5f9;
+    --accent-foreground: #0f172a;
+    --border: #e2e8f0;
+    --radius: 0.5rem;
+    --self-bg: #707b8d;        /* Darker gray for self */
+    --self-fg: #ffffff;        /* White text for self */
+    --active-bg: #0f172a;      /* Dark for active chat */
+    --active-hover: #1e293b;   /* Slightly lighter dark for hover on active */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                 "Helvetica Neue", Arial, "Noto Sans", sans-serif, 
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", 
+                 "Noto Color Emoji";
+    background-color: var(--background);
+    color: var(--foreground);
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    font-size: 1rem;
+    color: var(--muted-foreground);
+    margin-bottom: 2rem;
+}
+
+.chat-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 1.5rem;
+    height: 600px;
+}
+
+.users-panel, .chat-panel {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+}
+
+.panel-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.users-list {
+    height: calc(100% - 2.5rem);
+    overflow-y: auto;
+}
+
+.user-item {
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    margin-bottom: 0.5rem;
+    background-color: var(--secondary);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: calc(100% - 4px);
+}
+
+.user-item:hover {
+    background-color: var(--accent);
+}
+
+.user-item.current-user {
+    background-color: var(--self-bg);
+    color: var(--self-fg);     /* White text for better contrast */
+}
+
+.user-item.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.user-item.clickable:hover {
+    background-color: var(--accent);
+    transform: translateX(4px);
+}
+
+/* Optional: add a visual indicator that the user is selected */
+.user-item.clickable:active {
+    transform: translateX(2px);
+}
+
+.message-list {
+    height: calc(100% - 60px);
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.message {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    max-width: 80%;
+}
+
+.message.received {
+    background-color: var(--secondary);
+    margin-right: auto;
+}
+
+.message.sent {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    margin-left: auto;
+}
+
+.message-input {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.input, .select {
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: 0.875rem;
+}
+
+.input {
+    flex: 1;
+}
+
+.select {
+    width: 200px;
+}
+
+.button {
+    padding: 0.5rem 1rem;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.button:hover {
+    opacity: 0.9;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--secondary);
+    border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: var(--radius);
+}
+
+.user-item.active {
+    background-color: var(--active-bg);
+    color: var(--primary-foreground);
+}
+
+.user-item.clickable:hover:not(.active) {
+    background-color: var(--accent);
+    transform: translateX(4px);
+}
+
+.user-item-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.unread-badge {
+    background-color: #ef4444;
+    color: white;
+    border-radius: 9999px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+}
+
+.user-item.active .unread-badge {
+    background-color: var(--primary-foreground);
+    color: var(--primary);
+}
+
+/* Optional: Add a subtle animation for new messages */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.unread-badge {
+    animation: pulse 0.5s ease-in-out;
+}
+
+.users-panel {
+    overflow-x: hidden;
+    width: 100%;
+    padding-right: 4px;
+}
+
+/* New: specific hover state for active user */
+.user-item.clickable.active:hover {
+    background-color: var(--active-hover);
+    color: var(--primary-foreground);
+}
+
+/* Header styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.header-titles {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+    font-weight: 400;
+    margin: 0;
+}
+
+.about-button {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted-foreground);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.about-button:hover {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: relative;
+    background-color: var(--background);
+    margin: 15% auto;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    max-width: 500px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.close-button {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--muted-foreground);
+    padding: 0.25rem;
+    line-height: 1;
+}
+
+.modal-body {
+    color: var(--muted-foreground);
+    line-height: 1.6;
+}
+
+.modal-body p {
+    margin-bottom: 1rem;
+}
+
+.modal-body p:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .header-titles {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .subtitle {
+        font-size: 0.75rem;
+    }
+
+    .chat-layout {
+        grid-template-columns: 1fr;
+        height: calc(100vh - 100px); /* Adjust based on your header height */
+        gap: 0;
+    }
+
+    .users-panel {
+        display: none; /* Hidden by default on mobile */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        padding: 1rem;
+    }
+
+    .users-panel.active {
+        display: block;
+    }
+
+    .chat-panel {
+        height: 100%;
+    }
+
+    /* Add mobile navigation */
+    .mobile-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background-color: var(--background);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .mobile-nav-button {
+        padding: 0.5rem;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--foreground);
+        cursor: pointer;
+    }
+
+    /* Adjust modal for mobile */
+    .modal-content {
+        margin: 10% auto;
+        width: 90%;
+        max-width: none;
+    }
+
+    /* Adjust message input area */
+    .message-input {
+        padding: 0.5rem;
+        gap: 0.25rem;
+    }
+
+    .input {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+
+    .button {
+        padding: 0.5rem 0.75rem;
+    }
+
+    /* Add this to your existing styles */
+    .mobile-nav {
+        display: none; /* Hidden by default */
+    }
+
+    /* Show only relevant button based on context */
+    .mobile-nav-button.back-button {
+        display: none; /* Hidden by default */
+    }
+
+    /* When users panel is active, show back button and hide users list button */
+    .users-panel.active ~ .chat-panel .mobile-nav .back-button {
+        display: block;
+    }
+
+    .users-panel.active ~ .chat-panel .mobile-nav .users-button {
+        display: none;
+    }
+}
+
+/* Mobile nav is hidden by default */
+.mobile-nav {
+    display: none;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    /* ... other mobile styles ... */
+
+    .mobile-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background-color: var(--background);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .mobile-nav-button {
+        padding: 0.5rem;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--foreground);
+        cursor: pointer;
+    }
+
+    /* Show/hide appropriate buttons based on panel state */
+    .mobile-nav .back-button {
+        display: none;
+    }
+
+    .users-panel.active ~ .chat-panel .mobile-nav .back-button {
+        display: block;
+    }
+
+    .users-panel.active ~ .chat-panel .mobile-nav .users-button {
+        display: none;
+    }
+}
