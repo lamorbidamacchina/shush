@@ -1,4 +1,11 @@
-const socket = io();
+const serverUrl = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3000'  // local dev URL 
+  : 'https://shush.fly.dev'; // production URL
+
+const socket = io(serverUrl, {
+  transports: ['websocket', 'polling'],
+  reconnectionAttempts: 5
+});
 const ec = new elliptic.ec('secp256k1');
 
 // Generate client keys
