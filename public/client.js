@@ -383,3 +383,32 @@ window.addEventListener('resize', () => {
     // Force UI update
     updateUsersList(Array.from(connectedUsers.values()));
 });
+
+// Add key rotation functionality
+const KEY_ROTATION_INTERVAL = 1000 * 60 * 60; // 1 hour
+
+function rotateKeys() {
+    // Generate new keypair
+    const newKeyPair = nacl.box.keyPair();
+    
+    // Store old keys temporarily for message decryption
+    const oldPrivateKey = myPrivateKey;
+    const oldPublicKey = myPublicKey;
+    
+    // Update current keys
+    myPrivateKey = newKeyPair.secretKey;
+    myPublicKey = nacl.util.encodeBase64(newKeyPair.publicKey);
+    
+    // Notify server of new public key
+    socket.emit('update-key', myPublicKey);
+    
+    // Keep old keys for a grace period to decrypt pending messages
+    setTimeout(() => {
+        // Securely clear old keys from memory
+        oldPrivateKey.fill(0);
+        oldPublicKey.fill(0);
+    }, 1000 * 60 * 5); // 5 minutes grace period
+}
+
+// Start key rotation
+setInterval(rotateKeys, KEY_ROTATION_INTERVAL);
