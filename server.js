@@ -63,14 +63,22 @@ io.on('connection', (socket) => {
     console.log('New connected user:', socket.id);
 
     // User registration handling
-    socket.on('register', (publicKey) => {
-        const displayName = generateRandomName();
+    socket.on('register', ({ publicKey, sessionData }) => {
+        // Use existing display name if session is valid
+        const displayName = sessionData ? sessionData.displayName : generateRandomName();
+        
         console.log('User registered:', displayName, '(', socket.id, ')');
-        connectedUsers.set(socket.id, {
+        
+        const userData = {
             socketId: socket.id,
             publicKey: publicKey,
             displayName: displayName
-        });
+        };
+        
+        connectedUsers.set(socket.id, userData);
+        
+        // Send registration confirmation to the client
+        socket.emit('registration-complete', userData);
         
         // Send updated list to all
         io.emit('users-update', Array.from(connectedUsers.values()));

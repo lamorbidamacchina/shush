@@ -87,10 +87,44 @@ function verifyKeyIntegrity(publicKey, userId) {
     }
 }
 
+// Add session management
+function getOrCreateSessionData() {
+    const sessionData = localStorage.getItem('shushSession');
+    if (sessionData) {
+        const parsed = JSON.parse(sessionData);
+        // Add additional checks
+        if (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000 &&
+            parsed.userAgent === navigator.userAgent) {
+            return parsed;
+        }
+        localStorage.removeItem('shushSession');
+    }
+    return null;
+}
+
 // Connection established
 socket.on('connect', () => {
     console.log('Connected to server with ID:', socket.id);
-    socket.emit('register', myPublicKey);
+    
+    // Get existing session or null
+    const sessionData = getOrCreateSessionData();
+    
+    // Send registration with optional displayName
+    socket.emit('register', {
+        publicKey: myPublicKey,
+        sessionData: sessionData
+    });
+});
+
+// Add handler for successful registration
+socket.on('registration-complete', (userData) => {
+    // Save new session data
+    const sessionData = {
+        displayName: userData.displayName,
+        timestamp: Date.now(),
+        userAgent: navigator.userAgent
+    };
+    localStorage.setItem('shushSession', JSON.stringify(sessionData));
 });
 
 // Users list update
