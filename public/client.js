@@ -22,6 +22,71 @@ const unreadMessages = new Map();
 let activeConversationWith = null;
 let isViewingUsersList = window.innerWidth <= 768;  // Initialize based on screen width
 
+// Add these utility functions at the top level
+const KEY_VERIFICATION = {
+    SECP256K1_PUBLIC_KEY_LENGTH: 130, // Length of secp256k1 public key in hex
+    MAX_KEY_AGE: 1000 * 60 * 60 * 24, // 24 hours in milliseconds
+
+    verifyKeyFormat(publicKeyHex) {
+        // Check if key is valid hex string of correct length
+        const isValidHex = /^[0-9a-fA-F]+$/.test(publicKeyHex);
+        return isValidHex && publicKeyHex.length === this.SECP256K1_PUBLIC_KEY_LENGTH;
+    },
+
+    verifyKeyOnCurve(publicKeyHex) {
+        try {
+            const key = ec.keyFromPublic(publicKeyHex, 'hex');
+            return key.validate().result;
+        } catch (error) {
+            console.error('Key validation error:', error);
+            return false;
+        }
+    }
+};
+
+// Add key timestamp tracking
+const keyTimestamps = new Map();
+
+function updateKeyTimestamp(userId, publicKey) {
+    keyTimestamps.set(userId, {
+        key: publicKey,
+        timestamp: Date.now()
+    });
+}
+
+function isKeyFresh(userId) {
+    const keyData = keyTimestamps.get(userId);
+    if (!keyData) return false;
+    
+    const age = Date.now() - keyData.timestamp;
+    return age < KEY_VERIFICATION.MAX_KEY_AGE;
+}
+
+// Add this function to verify a complete key
+function verifyKeyIntegrity(publicKey, userId) {
+    // Skip verification for own key
+    if (userId === socket.id) return true;
+
+    try {
+        // Basic format check
+        if (!KEY_VERIFICATION.verifyKeyFormat(publicKey)) {
+            console.error(`Invalid key format for user ${userId}`);
+            return false;
+        }
+
+        // Verify key is on the curve
+        if (!KEY_VERIFICATION.verifyKeyOnCurve(publicKey)) {
+            console.error(`Key validation failed for user ${userId}`);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Key verification error:', error);
+        return false;
+    }
+}
+
 // Connection established
 socket.on('connect', () => {
     console.log('Connected to server with ID:', socket.id);
@@ -30,10 +95,32 @@ socket.on('connect', () => {
 
 // Users list update
 socket.on('users-update', (users) => {
+    // Verify all received keys before updating local state
+    const validUsers = users.filter(user => {
+        // Check key integrity
+        const isValid = verifyKeyIntegrity(user.publicKey, user.socketId);
+        
+        if (!isValid) {
+            console.warn(`Excluding user ${user.displayName} due to invalid key`);
+            return false;
+        }
+
+        // If key is valid, update its timestamp
+        updateKeyTimestamp(user.socketId, user.publicKey);
+
+        // Check if key hasn't expired
+        if (!isKeyFresh(user.socketId)) {
+            console.warn(`Excluding user ${user.displayName} due to stale key`);
+            return false;
+        }
+
+        return true;
+    });
+
     // Update our local copy of connected users
-    connectedUsers = new Map(users.map(user => [user.socketId, user]));
-    updateUsersList(users);
-    updateRecipientSelect(users);
+    connectedUsers = new Map(validUsers.map(user => [user.socketId, user]));
+    updateUsersList(validUsers);
+    updateRecipientSelect(validUsers);
 });
 
 // Message reception
@@ -175,6 +262,13 @@ async function sendMessage() {
     
     try {
         const recipientPublicKey = userKeys.get(activeConversationWith);
+        
+        // Verify recipient key before encrypting
+        if (!verifyKeyIntegrity(recipientPublicKey, activeConversationWith)) {
+            displayError('Cannot send message: Recipient key verification failed');
+            return;
+        }
+
         const encryptedMessage = await encryptMessage(message, recipientPublicKey);
         
         socket.emit('private-message', {
@@ -255,6 +349,11 @@ async function decryptMessage(encryptedMessage) {
   try {
       // Extract components from message
       const { ephemeralPublicKey, iv, encryptedData } = encryptedMessage;
+      
+      // Verify ephemeral key integrity
+      if (!verifyKeyIntegrity(ephemeralPublicKey, 'ephemeral')) {
+          throw new Error('Invalid ephemeral key');
+      }
       
       // Reconstruct ephemeral public key
       const ephemeralKey = ec.keyFromPublic(ephemeralPublicKey, 'hex');
